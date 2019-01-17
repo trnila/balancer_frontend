@@ -17,11 +17,6 @@ import {scale, rotate, translate, transform, applyToPoint, inverse} from 'transf
 const PERSIST_KEYS = ['angle', 'flip_x', 'flip_y']
 
 export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
-  },
-
   data() {
     return {
       width: 0,
@@ -37,7 +32,7 @@ export default {
       margin: 40,
 
       touch_timer: null,
-      show_settings: true,
+      show_settings: false,
     }
   },
 
@@ -68,13 +63,11 @@ export default {
     listener.subscribe((message) => {
         this.position = [message['pos_x'], message['pos_y']]
         this.target = [message['target_x'], message['target_y']]
-        window.requestAnimationFrame = this.redraw
+        window.requestAnimationFrame(this.redraw)
     });
 
     window.addEventListener('resize', this.on_resize)
     this.on_resize()
-
-    setInterval(this.redraw, 100)
   },
 
   methods: {
@@ -147,8 +140,8 @@ export default {
         });
 
         var request = new ROSLIB.ServiceRequest({
-            x: transformed.x,
-            y: transformed.y
+            x: parseInt(transformed.x),
+            y: parseInt(transformed.y)
         });
         addTwoIntsClient.callService(request);
     },
@@ -233,6 +226,7 @@ export default {
           make([this.dimension[0], this.dimension[1]], 'pink')
         }
 
+        make([this.position[0], this.position[1]], 'pink')
         make([this.target[0], this.target[1]], 'yellow')
     },
 
