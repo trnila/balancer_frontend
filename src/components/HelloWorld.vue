@@ -5,6 +5,7 @@
     <div v-if="show_settings" class="settings">
       flip_x: <input type="checkbox" v-model="flip_x">
       flip_y: <input type="checkbox" v-model="flip_y">
+      flip_sides: <input type="checkbox" v-model="flip_sides">
       <button @click="clicked" style="width: 80px">{{angle % 360}}</button>
       <button @click="() => this.show_settings = false">Close</button>
     </div>
@@ -15,7 +16,7 @@
 import ROSLIB from 'roslib'
 import {scale, rotate, translate, transform, applyToPoint, inverse} from 'transformation-matrix'
 
-const PERSIST_KEYS = ['angle', 'flip_x', 'flip_y']
+const PERSIST_KEYS = ['angle', 'flip_x', 'flip_y', 'flip_sides']
 const STATE_CONNECTING = "connecting..."
 const STATE_CONNECTED = "waiting for data..."
 const STATE_ERROR = "error..."
@@ -34,6 +35,7 @@ export default {
       target: [-10, -10],
       flip_x: false,
       flip_y: false,
+      flip_sides: false,
       margin: 40,
 
       touch_timer: null,
@@ -46,17 +48,34 @@ export default {
     }
   },
 
+  watch: {
+    show_settings() {
+      requestAnimationFrame(this.redraw)
+    }
+  },
+
   mounted() {
     this.ctx = this.$refs['canvas'].getContext('2d');
 
     for(let key in PERSIST_KEYS) {
       key = PERSIST_KEYS[key]
       if(localStorage[key]) {
-        let value = localStorage[key] === "true" ? true : parseInt(localStorage[key])
+        let value = null;
+        if(localStorage[key] === "true") {
+          value = true;
+        } else if (localStorage[key] === "false") {
+          value = false;
+        } else {
+          value = parseInt(localStorage[key])
+        }
         this.$set(this, key, value)
       }
 
-      this.$watch(key, (value) => localStorage[key] = value)
+      this.$watch(key, (value) => {
+        localStorage[key] = value
+        requestAnimationFrame(this.redraw)
+        this.on_resize()
+      })
     }
 
     this.init_ros();
@@ -103,8 +122,8 @@ export default {
         this.connected = true
         this.connection_state = STATE_CONNECTED
 
-
         this.nodata_rearm()
+        requestAnimationFrame(this.redraw)
       })
 
       var listener = new ROSLIB.Topic({
@@ -150,9 +169,18 @@ export default {
       this.$refs['canvas'].height = h
 
 
-      let dims = (this.get_quadrant() == 0 || this.get_quadrant() == 2) ? 
+      let dims;
+      if(this.flip_sides) {
+        dims = (this.get_quadrant() == 0 || this.get_quadrant() == 2) ? 
         [this.dimension[1], this.dimension[0]] :
         [this.dimension[0], this.dimension[1]];
+      } else {
+        dims = (this.get_quadrant() == 0 || this.get_quadrant() == 2) ? 
+        [this.dimension[0], this.dimension[1]] :
+        [this.dimension[1], this.dimension[0]];
+      }
+
+      
 
       
       if(w > h) {
@@ -254,32 +282,32 @@ export default {
 
     redraw() {
       this.build_matrix()
-        let ctx = this.ctx;
+      let ctx = this.ctx;
 
-        ctx.fillStyle = 'black'
-        ctx.fillRect(0, 0, this.$refs['canvas'].width, this.$refs['canvas'].height)
+      ctx.fillStyle = 'black'
+      ctx.fillRect(0, 0, this.$refs['canvas'].width, this.$refs['canvas'].height)
 
-        ctx.fillStyle = 'green'
-        ctx.fillRect(this.offset[0], this.offset[1], this.width, this.height)
+      ctx.fillStyle = 'green'
+      ctx.fillRect(this.offset[0], this.offset[1], this.width, this.height)
 
 
-        let make = (p, color) => {
-          let point = applyToPoint(this.matrix, {x: p[0], y: p[1]});
-          
-          ctx.beginPath();
-          ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-          ctx.fillStyle = color
-          ctx.fill()
-        }
+      let make = (p, color) => {
+        let point = applyToPoint(this.matrix, {x: p[0], y: p[1]});
+        
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = color
+        ctx.fill()
+      }
 
-        if(this.show_settings) {
-          make([0, 0], 'blue')
-          make([this.dimension[0], 0], 'red')
-          make([this.dimension[0], this.dimension[1]], 'pink')
-        }
+      if(this.show_settings) {
+        make([0, 0], 'blue')
+        make([this.dimension[0], 0], 'red')
+        make([this.dimension[0], this.dimension[1]], 'pink')
+      }     
 
-        make([this.position[0], this.position[1]], 'pink')
-        make([this.target[0], this.target[1]], 'yellow')
+      make([this.position[0], this.position[1]], 'pink')
+      make([this.target[0], this.target[1]], 'yellow')
     },
 
     get_quadrant() {
