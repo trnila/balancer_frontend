@@ -4,7 +4,7 @@
     <div>
       flip_x: <input type="checkbox" v-model="flip_x">
       flip_y: <input type="checkbox" v-model="flip_y">
-      <button @click="clicked">xx</button>
+      <button @click="clicked" style="width: 80px">{{angle % 360}}</button>
     </div>
   </div>
 </template>
@@ -31,8 +31,8 @@ export default {
       angle: 0,
       i: 0,
       target: [-10, -10],
-      flip_x: true,
-      flip_y: true
+      flip_x: false,
+      flip_y: false
     }
   },
 
@@ -118,50 +118,87 @@ export default {
     },
 
     build_matrix() {
+          const q = this.angle % 360 / 90
+
           let t = translate(offset[0], offset[1])
-          let t2 = translate(0, 0)
+          let tx = 0;
+          let ty = 0;
 
-          let sx = this.width / this.dimension[0];
-          let sy = this.height / this.dimension[1];
+          if(q == 0) {
+            tx = this.flip_x
+            ty = this.flip_y
+          } else if(q == 1) {
+            ty = !this.flip_x
+            tx = this.flip_y            
+          } else if(q == 2) {
+            tx = !this.flip_x
+            ty = !this.flip_y
+          } else {
+            tx = !this.flip_y
+            ty = this.flip_x
+          }
 
-          if(this.angle % 360 == 0) {
+          /*if(this.angle % 360 == 0) {
             if(this.flip_x) {
-              t2 = translate(-this.dimension[0], 0)    
+              tx = -this.dimension[0];
+            }
+            if(this.flip_y) {
+              ty = -this.dimension[1]
             }
 
           } else if (this.angle % 360 == 90) { 
-           t2 = translate(0, -this.dimension[1]) 
+            ty = -this.dimension[1]
             if(this.flip_x) {
-              t2 = translate(-this.dimension[0], -this.dimension[1])    
+              tx = -this.dimension[0]
             }
 
-           sx = this.height / this.dimension[0];
-           sy =  this.width / this.dimension[1];
+            if(this.flip_y) {
+              ty = 0;
+            }
           } else if (this.angle % 360 == 180) {
             if(!this.flip_x) {
-              t2 = translate(-this.dimension[0], -this.dimension[1])
+              tx = -this.dimension[0]
+              ty = -this.dimension[1]
             } else {
-              t2 = translate(0, -this.dimension[1])
+              ty = -this.dimension[1]
             }
            
           } else if (this.angle % 360 == 270) {
-            sx = this.height / this.dimension[0]
-            sy = this.width / this.dimension[1]
-
             if(!this.flip_x) {
-              t2 = translate(-this.dimension[0], 0)
+              tx = -this.dimension[0]
             }
-          } 
+          } */
+
+          let sx, sy;
+          if(q == 1 || q == 3) {
+            sx = this.height / this.dimension[0];
+            sy =  this.width / this.dimension[1];
+          } else {
+            sx = this.width / this.dimension[0];
+            sy = this.height / this.dimension[1];
+          }
+
+          if(this.flip_y) {
+            if(q == 1 || q == 3) {
+              sx *= -1;
+            } else {
+              sy *= -1;
+            }
+          }
 
           if(this.flip_x) {
-            sx *= -1;
+            if(q == 1 || q == 3) {
+              sy *= -1;
+            } else {
+              sx *= -1;
+            }
           }
 
           this.matrix = transform(
             t,
             rotate(this.angle * Math.PI/180),
             scale(sx, sy),
-            t2
+            translate(-tx * this.dimension[0], -ty * this.dimension[1])
           );
     },
 
