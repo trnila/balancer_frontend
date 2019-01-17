@@ -13,8 +13,6 @@
 import ROSLIB from 'roslib'
 let {scale, rotate, translate, transform, applyToPoint, inverse} = window.TransformationMatrix;
 
-let offset = [300, 300]
-
 export default {
   name: 'HelloWorld',
   props: {
@@ -32,7 +30,8 @@ export default {
       i: 0,
       target: [-10, -10],
       flip_x: false,
-      flip_y: false
+      flip_y: false,
+      margin: 40
     }
   },
 
@@ -69,23 +68,35 @@ export default {
       this.width = this.height;
       this.height = tmp;
 
-      this.build_matrix()
+      this.on_resize()
     },
 
     on_resize() {
-      this.$refs['canvas'].width = window.innerWidth;
-      this.$refs['canvas'].height = window.innerHeight;
+      const w = window.innerWidth
+      const h = window.innerHeight
 
-      this.height = 300;
-      this.width = 200;
+      this.$refs['canvas'].width = w
+      this.$refs['canvas'].height = h
 
-      /*if(w > h) {
-          this.width = (h - 40) * this.dimension[1] / this.dimension[0]
-          this.height = h - 40;
-      } else {
-          this.width = w - 40;
-          this.height = (w - 40) * this.dimension[0] / this.dimension[1];
-      }*/
+
+      let dims = (this.get_quadrant() == 0 || this.get_quadrant() == 2) ? 
+        [this.dimension[1], this.dimension[0]] :
+        [this.dimension[0], this.dimension[1]];
+
+      if(this.get_quadrant() == 0 || this.get_quadrant() == 2) {
+        if(w > h) {
+            this.height = Math.min(h - 40, (w - 40) / (dims[0] / dims[1]))
+            this.width = this.height * dims[0] / dims[1]
+        } else {
+            this.width = Math.min(w - 40, (h - 40) / (dims[0] / dims[1]))
+            this.height = this.width * dims[0] / dims[1];
+        }
+      }
+
+      this.offset = [
+        w / 2 - this.width / 2,
+        h / 2 - this.height  / 2
+      ]
 
       this.build_matrix()
     },
@@ -118,9 +129,9 @@ export default {
     },
 
     build_matrix() {
-          const q = this.angle % 360 / 90
+          const q = this.get_quadrant()
 
-          let t = translate(offset[0], offset[1])
+          let t = translate(this.offset[0], this.offset[1])
           let tx = 0;
           let ty = 0;
 
@@ -137,37 +148,6 @@ export default {
             tx = !this.flip_y
             ty = this.flip_x
           }
-
-          /*if(this.angle % 360 == 0) {
-            if(this.flip_x) {
-              tx = -this.dimension[0];
-            }
-            if(this.flip_y) {
-              ty = -this.dimension[1]
-            }
-
-          } else if (this.angle % 360 == 90) { 
-            ty = -this.dimension[1]
-            if(this.flip_x) {
-              tx = -this.dimension[0]
-            }
-
-            if(this.flip_y) {
-              ty = 0;
-            }
-          } else if (this.angle % 360 == 180) {
-            if(!this.flip_x) {
-              tx = -this.dimension[0]
-              ty = -this.dimension[1]
-            } else {
-              ty = -this.dimension[1]
-            }
-           
-          } else if (this.angle % 360 == 270) {
-            if(!this.flip_x) {
-              tx = -this.dimension[0]
-            }
-          } */
 
           let sx, sy;
           if(q == 1 || q == 3) {
@@ -210,7 +190,7 @@ export default {
         ctx.fillRect(0, 0, this.$refs['canvas'].width, this.$refs['canvas'].height)
 
         ctx.fillStyle = 'green'
-        ctx.fillRect(offset[0], offset[1], this.width, this.height)
+        ctx.fillRect(this.offset[0], this.offset[1], this.width, this.height)
 
 
         let make = (p, color) => {
@@ -228,6 +208,10 @@ export default {
 
         make([this.target[0], this.target[1]], 'yellow')
 
+    },
+
+    get_quadrant() {
+      return this.angle % 360 / 90
     }
   }
 }
@@ -238,6 +222,6 @@ div {
   position: absolute;
   top: 0px;
   left: 0px;
-  background: red;
+  color: white
 }
 </style>
