@@ -14,6 +14,8 @@
 import ROSLIB from 'roslib'
 import {scale, rotate, translate, transform, applyToPoint, inverse} from 'transformation-matrix'
 
+const PERSIST_KEYS = ['angle', 'flip_x', 'flip_y']
+
 export default {
   name: 'HelloWorld',
   props: {
@@ -35,12 +37,22 @@ export default {
       margin: 40,
 
       touch_timer: null,
-      show_settings: false,
+      show_settings: true,
     }
   },
 
   mounted() {
     this.ctx = this.$refs['canvas'].getContext('2d');
+
+    for(let key in PERSIST_KEYS) {
+      key = PERSIST_KEYS[key]
+      if(localStorage[key]) {
+        let value = localStorage[key] === "true" ? true : parseInt(localStorage[key])
+        this.$set(this, key, value)
+      }
+
+      this.$watch(key, (value) => localStorage[key] = value)
+    }
 
     var ros = new ROSLIB.Ros({
         url : 'ws://balancer.local:9090'
@@ -77,7 +89,7 @@ export default {
     },
 
     clicked() {
-      this.angle += 90;
+      this.angle = (this.angle + 90) % 360;
       let tmp = this.width;
       this.width = this.height;
       this.height = tmp;
