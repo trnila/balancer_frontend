@@ -1,10 +1,11 @@
 <template>
   <div>
-    <canvas ref="canvas" @click="canvas_clicked"></canvas>
-    <div>
+    <canvas ref="canvas" @click="canvas_clicked" v-on:touchstart="touchstart" v-on:touchend="touchend"></canvas>
+    <div v-if="show_settings">
       flip_x: <input type="checkbox" v-model="flip_x">
       flip_y: <input type="checkbox" v-model="flip_y">
       <button @click="clicked" style="width: 80px">{{angle % 360}}</button>
+      <button @click="() => this.show_settings = false">Close</button>
     </div>
   </div>
 </template>
@@ -31,7 +32,10 @@ export default {
       target: [-10, -10],
       flip_x: false,
       flip_y: false,
-      margin: 40
+      margin: 40,
+
+      touch_timer: null,
+      show_settings: false,
     }
   },
 
@@ -62,6 +66,16 @@ export default {
   },
 
   methods: {
+    touchstart() {
+      this.touch_timer = setInterval(() => this.show_settings = true, 2000)
+    },
+
+    touchend() {
+      if(this.touch_timer) {
+        clearInterval(this.touch_timer)
+      }
+    },
+
     clicked() {
       this.angle += 90;
       let tmp = this.width;
@@ -201,12 +215,13 @@ export default {
           ctx.fill()
         }
 
-        make([0, 0], 'blue')
-        make([this.dimension[0], 0], 'red')
-        make([this.dimension[0], this.dimension[1]], 'pink')
+        if(this.show_settings) {
+          make([0, 0], 'blue')
+          make([this.dimension[0], 0], 'red')
+          make([this.dimension[0], this.dimension[1]], 'pink')
+        }
 
         make([this.target[0], this.target[1]], 'yellow')
-
     },
 
     get_quadrant() {
