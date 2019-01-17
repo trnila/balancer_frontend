@@ -11,7 +11,7 @@
 
 <script>
 import ROSLIB from 'roslib'
-let {scale, rotate, translate, transform, applyToPoint, inverse} = window.TransformationMatrix;
+import {scale, rotate, translate, transform, applyToPoint, inverse} from 'transformation-matrix'
 
 export default {
   name: 'HelloWorld',
