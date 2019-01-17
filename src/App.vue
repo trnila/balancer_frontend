@@ -23,13 +23,4 @@ html, body {
     margin: 0;
     height: 100%;
 }
-
-body {
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 </style>
