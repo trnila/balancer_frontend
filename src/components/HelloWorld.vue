@@ -83,14 +83,13 @@ export default {
         [this.dimension[1], this.dimension[0]] :
         [this.dimension[0], this.dimension[1]];
 
-      if(this.get_quadrant() == 0 || this.get_quadrant() == 2) {
-        if(w > h) {
-            this.height = Math.min(h - 40, (w - 40) / (dims[0] / dims[1]))
-            this.width = this.height * dims[0] / dims[1]
-        } else {
-            this.width = Math.min(w - 40, (h - 40) / (dims[0] / dims[1]))
-            this.height = this.width * dims[0] / dims[1];
-        }
+      
+      if(w > h) {
+          this.height = Math.min(h - 40, (w - 40) / (dims[0] / dims[1]))
+          this.width = this.height * dims[0] / dims[1]
+      } else {
+          this.width = Math.min(w - 40, (h - 40) / (dims[0] / dims[1]))
+          this.height = this.width * dims[0] / dims[1];
       }
 
       this.offset = [
