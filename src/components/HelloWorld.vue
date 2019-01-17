@@ -1,7 +1,8 @@
 <template>
-  <div>
-    <canvas ref="canvas" @click="canvas_clicked" v-on:touchstart="touchstart" v-on:touchend="touchend"></canvas>
-    <div v-if="show_settings">
+  <div class="app">
+    <span v-if="connection_state" class="message">{{connection_state}}</span>
+    <canvas ref="canvas" @click="canvas_clicked" v-on:touchstart="touchstart" v-on:touchend="touchend" :hidden="connection_state"></canvas>
+    <div v-if="show_settings" class="settings">
       flip_x: <input type="checkbox" v-model="flip_x">
       flip_y: <input type="checkbox" v-model="flip_y">
       <button @click="clicked" style="width: 80px">{{angle % 360}}</button>
@@ -15,6 +16,10 @@ import ROSLIB from 'roslib'
 import {scale, rotate, translate, transform, applyToPoint, inverse} from 'transformation-matrix'
 
 const PERSIST_KEYS = ['angle', 'flip_x', 'flip_y']
+const STATE_CONNECTING = "connecting..."
+const STATE_CONNECTED = "waiting for data..."
+const STATE_ERROR = "error..."
+const STATE_WORKING = null;
 
 export default {
   data() {
@@ -33,6 +38,11 @@ export default {
 
       touch_timer: null,
       show_settings: false,
+
+      connection_state: STATE_CONNECTING,
+      reconnect_timer: null,
+
+      nodata_timer: null,
     }
   },
 
@@ -49,28 +59,70 @@ export default {
       this.$watch(key, (value) => localStorage[key] = value)
     }
 
-    var ros = new ROSLIB.Ros({
-        url : 'ws://balancer.local:9090'
-    });
-    this.ros = ros
-
-    var listener = new ROSLIB.Topic({
-      ros : ros,
-      name : '/measurements',
-      messageType : 'ballbalancer_msgs/Measurement'
-    });
-
-    listener.subscribe((message) => {
-        this.position = [message['pos_x'], message['pos_y']]
-        this.target = [message['target_x'], message['target_y']]
-        window.requestAnimationFrame(this.redraw)
-    });
+    this.init_ros();
 
     window.addEventListener('resize', this.on_resize)
     this.on_resize()
   },
 
   methods: {
+    init_ros() {
+      if(this.nodata_timer) {
+        clearInterval(this.nodata_timer)
+      }
+
+      this.connection_state = STATE_CONNECTING
+      var ros = new ROSLIB.Ros({
+          url : 'ws://balancer.local:9090'
+      });
+      this.ros = ros
+
+      ros.on('error', (error) => {
+        this.connected = false
+        this.connection_state = STATE_ERROR
+        console.log(error)
+
+        if(this.reconnect_timer) {
+          clearTimeout(this.reconnect_timer)
+        }
+        this.reconnect_timer = setTimeout(this.init_ros, 1000);
+      });
+
+      ros.on('close', () => {
+        this.connected = false
+        this.connection_state = STATE_ERROR
+        console.log('closed')
+
+        if(this.reconnect_timer) {
+          clearTimeout(this.reconnect_timer)
+        }
+        this.reconnect_timer = setTimeout(this.init_ros, 1000);
+      });
+
+      ros.on('connection', () => {
+        this.connected = true
+        this.connection_state = STATE_CONNECTED
+
+
+        this.nodata_rearm()
+      })
+
+      var listener = new ROSLIB.Topic({
+        ros : ros,
+        name : '/measurements',
+        messageType : 'ballbalancer_msgs/Measurement'
+      });
+
+      listener.subscribe((message) => {
+          this.nodata_rearm()
+
+          this.connection_state = STATE_WORKING
+          this.position = [message['pos_x'], message['pos_y']]
+          this.target = [message['target_x'], message['target_y']]
+          window.requestAnimationFrame(this.redraw)
+      });
+    },
+
     touchstart() {
       this.touch_timer = setInterval(() => this.show_settings = true, 2000)
     },
@@ -232,16 +284,40 @@ export default {
 
     get_quadrant() {
       return this.angle % 360 / 90
+    },
+
+    nodata_rearm() {
+      if(this.nodata_timer) {
+        clearInterval(this.nodata_timer)
+      }
+
+      this.nodata_timer = setInterval(() => this.connection_state = STATE_CONNECTED, 5000)
     }
   }
 }
 </script>
 
 <style scoped>
-div {
+div.app {
+  width: 100%;
+  height: 100%;
+}
+
+div.settings {
   position: absolute;
   top: 0px;
   left: 0px;
-  color: white
+}
+
+.message {
+  display: flex;
+    align-items: center;
+  justify-content: center;
+  font-size: 10vmin;
+  z-index: 1;
+  position: absolute;
+  top: 0px;
+  width: 100%;
+  height: 100%;
 }
 </style>

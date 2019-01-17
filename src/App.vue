@@ -23,5 +23,7 @@ html, body {
     margin: 0;
     height: 100%;
     font-size: 1em;
+    color: white;
+    background: black;
 }
 </style>
