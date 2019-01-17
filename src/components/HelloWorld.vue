@@ -124,12 +124,12 @@ export default {
     },
 
     touchstart() {
-      this.touch_timer = setInterval(() => this.show_settings = true, 2000)
+      this.touch_timer = setTimeout(() => this.show_settings = true, 2000)
     },
 
     touchend() {
       if(this.touch_timer) {
-        clearInterval(this.touch_timer)
+        clearTimeout(this.touch_timer)
       }
     },
 
