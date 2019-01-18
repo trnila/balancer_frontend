@@ -168,7 +168,6 @@ export default {
       this.$refs['canvas'].width = w
       this.$refs['canvas'].height = h
 
-
       let dims;
       if(this.flip_sides) {
         dims = (this.get_quadrant() == 0 || this.get_quadrant() == 2) ? 
@@ -180,9 +179,6 @@ export default {
         [this.dimension[1], this.dimension[0]];
       }
 
-      
-
-      
       if(w > h) {
           this.height = Math.min(h - 40, (w - 40) / (dims[0] / dims[1]))
           this.width = this.height * dims[0] / dims[1]
@@ -227,61 +223,60 @@ export default {
     },
 
     build_matrix() {
-          const q = this.get_quadrant()
+      const q = this.get_quadrant()
 
-          let t = translate(this.offset[0], this.offset[1])
-          let tx = 0;
-          let ty = 0;
+      let t = translate(this.offset[0], this.offset[1])
+      let tx = 0;
+      let ty = 0;
 
-          if(q == 0) {
-            tx = this.flip_x
-            ty = this.flip_y
-          } else if(q == 1) {
-            ty = !this.flip_x
-            tx = this.flip_y            
-          } else if(q == 2) {
-            tx = !this.flip_x
-            ty = !this.flip_y
-          } else {
-            tx = !this.flip_y
-            ty = this.flip_x
-          }
+      if(q == 0) {
+        tx = this.flip_x
+        ty = this.flip_y
+      } else if(q == 1) {
+        ty = !this.flip_x
+        tx = this.flip_y            
+      } else if(q == 2) {
+        tx = !this.flip_x
+        ty = !this.flip_y
+      } else {
+        tx = !this.flip_y
+        ty = this.flip_x
+      }
 
-          let sx, sy;
-          if(q == 1 || q == 3) {
-            sx = this.height / this.dimension[0];
-            sy =  this.width / this.dimension[1];
-          } else {
-            sx = this.width / this.dimension[0];
-            sy = this.height / this.dimension[1];
-          }
+      let sx, sy;
+      if(q == 1 || q == 3) {
+        sx = this.height / this.dimension[0];
+        sy =  this.width / this.dimension[1];
+      } else {
+        sx = this.width / this.dimension[0];
+        sy = this.height / this.dimension[1];
+      }
 
-          if(this.flip_y) {
-            if(q == 1 || q == 3) {
-              sx *= -1;
-            } else {
-              sy *= -1;
-            }
-          }
+      if(this.flip_y) {
+        if(q == 1 || q == 3) {
+          sx *= -1;
+        } else {
+          sy *= -1;
+        }
+      }
 
-          if(this.flip_x) {
-            if(q == 1 || q == 3) {
-              sy *= -1;
-            } else {
-              sx *= -1;
-            }
-          }
+      if(this.flip_x) {
+        if(q == 1 || q == 3) {
+          sy *= -1;
+        } else {
+          sx *= -1;
+        }
+      }
 
-          this.matrix = transform(
-            t,
-            rotate(this.angle * Math.PI/180),
-            scale(sx, sy),
-            translate(-tx * this.dimension[0], -ty * this.dimension[1])
-          );
+      this.matrix = transform(
+        t,
+        rotate(this.angle * Math.PI/180),
+        scale(sx, sy),
+        translate(-tx * this.dimension[0], -ty * this.dimension[1])
+      );
     },
 
     redraw() {
-      this.build_matrix()
       let ctx = this.ctx;
 
       ctx.fillStyle = 'black'
