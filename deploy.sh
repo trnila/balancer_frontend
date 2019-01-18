@@ -1,4 +1,4 @@
 #!/bin/sh
 yarn build
-rsync -av dist/ balancer:/var/www/
+rsync -av --delete dist/ balancer:/var/www/
 
