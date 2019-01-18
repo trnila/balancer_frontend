@@ -214,8 +214,7 @@ export default {
          transformed.x >= this.dimension[0] - this.padding || transformed.y >= this.dimension[1] - this.padding) {
           return;
         }
-        console.log(transformed, this.margin)
-
+        
         this.target = [transformed.x, transformed.y];
 
         var addTwoIntsClient = new ROSLIB.Service({
@@ -286,11 +285,6 @@ export default {
     },
 
     redraw() {
-      let transform = (p) => {
-        let result = applyToPoint(this.matrix, {x: p[0], y: p[1]});
-        return [result.x, result.y];
-      }
-
       let ctx = this.ctx;
       console.log(this.padding)
 
