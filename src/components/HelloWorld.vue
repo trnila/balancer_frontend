@@ -297,7 +297,7 @@ export default {
       ctx.fillStyle = 'black'
       ctx.fillRect(0, 0, this.$refs['canvas'].width, this.$refs['canvas'].height)
 
-      ctx.fillStyle = '#d03c4a'
+      ctx.fillStyle = 'darkred'
       ctx.fillRect(this.offset[0], this.offset[1], this.width, this.height)
 
       ctx.fillStyle = 'green'
@@ -309,13 +309,21 @@ export default {
       )
 
 
-      let make = (p, color) => {
+      let make = (p, fill, stroke) => {
         let point = applyToPoint(this.matrix, {x: p[0], y: p[1]});
         
         ctx.beginPath();
         ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = color
-        ctx.fill()
+
+        if(stroke) {
+          ctx.strokeStyle = stroke
+          ctx.stroke()
+        }
+
+        if(fill) {
+          ctx.fillStyle = fill
+          ctx.fill()
+        }
       }
 
       if(this.show_settings) {
@@ -324,8 +332,8 @@ export default {
         make([this.dimension[0], this.dimension[1]], 'pink')
       }     
 
-      make([this.position[0], this.position[1]], 'pink')
-      make([this.target[0], this.target[1]], 'yellow')
+      make([this.target[0], this.target[1]], 'gray', 'black')
+      make([this.position[0], this.position[1]], 'black')
     },
 
     get_quadrant() {
