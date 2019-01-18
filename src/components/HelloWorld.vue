@@ -6,7 +6,9 @@
       flip_x: <input type="checkbox" v-model="flip_x">
       flip_y: <input type="checkbox" v-model="flip_y">
       flip_sides: <input type="checkbox" v-model="flip_sides">
+      <input type="range" v-model.number="padding" min=0 max=50> {{padding}}
       <button @click="clicked" style="width: 80px">{{angle % 360}}</button>
+      <button @click="restart">Refresh</button>
       <button @click="() => this.show_settings = false">Close</button>
     </div>
   </div>
@@ -16,7 +18,7 @@
 import ROSLIB from 'roslib'
 import {scale, rotate, translate, transform, applyToPoint, inverse} from 'transformation-matrix'
 
-const PERSIST_KEYS = ['angle', 'flip_x', 'flip_y', 'flip_sides']
+const PERSIST_KEYS = ['angle', 'flip_x', 'flip_y', 'flip_sides', 'padding']
 const STATE_CONNECTING = "connecting..."
 const STATE_CONNECTED = "waiting for data..."
 const STATE_ERROR = "error..."
@@ -27,12 +29,13 @@ export default {
     return {
       width: 0,
       height: 0,
-      position: [0, 0],
       dimension: [170, 230],
-      boundary: [0, 0, 170, 230],
-      angle: 0,
-      i: 0,
+      padding: 20,
+
+      position: [0, 0],
       target: [-10, -10],
+
+      angle: 0,
       flip_x: false,
       flip_y: false,
       flip_sides: false,
@@ -142,6 +145,10 @@ export default {
       });
     },
 
+    restart() {
+      document.location.reload(true);
+    },
+
     touchstart() {
       this.touch_timer = setTimeout(() => this.show_settings = true, 2000)
     },
@@ -203,9 +210,11 @@ export default {
           y: event.clientY - rect.top
         });
 
-        if(transformed.x < 0 || transformed.y < 0 || transformed.x >= this.dimension[0] || transformed.y >= this.dimension[1]) {
+        if(transformed.x < this.padding || transformed.y < this.padding ||
+         transformed.x >= this.dimension[0] - this.padding || transformed.y >= this.dimension[1] - this.padding) {
           return;
         }
+        console.log(transformed, this.margin)
 
         this.target = [transformed.x, transformed.y];
 
@@ -277,13 +286,27 @@ export default {
     },
 
     redraw() {
+      let transform = (p) => {
+        let result = applyToPoint(this.matrix, {x: p[0], y: p[1]});
+        return [result.x, result.y];
+      }
+
       let ctx = this.ctx;
+      console.log(this.padding)
 
       ctx.fillStyle = 'black'
       ctx.fillRect(0, 0, this.$refs['canvas'].width, this.$refs['canvas'].height)
 
-      ctx.fillStyle = 'green'
+      ctx.fillStyle = '#d03c4a'
       ctx.fillRect(this.offset[0], this.offset[1], this.width, this.height)
+
+      ctx.fillStyle = 'green'
+      ctx.fillRect(
+        this.offset[0] + this.padding,
+        this.offset[1] + this.padding,
+        this.width - 2 * this.padding,
+        this.height - 2 * this.padding 
+      )
 
 
       let make = (p, color) => {
@@ -334,7 +357,7 @@ div.settings {
 
 .message {
   display: flex;
-    align-items: center;
+  align-items: center;
   justify-content: center;
   font-size: 10vmin;
   z-index: 1;
